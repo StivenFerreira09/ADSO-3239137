@@ -16,7 +16,7 @@ Concoer desde barrio dónde este ubicado, es decir la presición de a este nivel
 
 -- trace
 shipping_order  [id, neighborhood_origin, neighborhood_destination, product_id ]
-trace           [id, shipping_order_id, neighborhood_status, enem('Lugar de envío', 'En transito', 'Lugar destino')]
+trace           [id, shipping_order_id, neighborhood_status, enum('Lugar de envío', 'En transito', 'Lugar destino')]
 
 MER:
 MR:
