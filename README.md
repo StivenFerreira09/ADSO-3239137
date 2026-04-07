@@ -1,16 +1,16 @@
 ***Perfil:***
 
-Organización institucional: code-sena
+ ## code-sena ##
 
 Nombre: Stiven Ferreira Espinosa
 
-GitHub: @StivenFerreira09
+GitHub: StivenFerreira09
 
 Correo electrónico: stiven.x.cn@gmail.com
 
 
 
-***Programa de formación:***
+## Programa de formación: ##
 
 Actualmente me encuentro en proceso de formación en el programa:
 
@@ -19,7 +19,7 @@ Análisis y Desarrollo de Software (ADSO)
 
 
 
-***Fechas importantes:***
+## Fechas importantes: ##
 
 Fecha de ingreso: 25 de julio de 2025
 
@@ -29,7 +29,7 @@ Disponibilidad
 Lunes a viernes: 18:00 – 24:00
 
 
-***Tecnologías:***
+## Tecnologías: ##
 
 Actualmente me encuentro trabajando con algunas herramientas y, a futuro, espero continuar fortaleciendo mis conocimientos en:
 
