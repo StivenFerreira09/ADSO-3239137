@@ -1,0 +1,178 @@
+-- =====================================
+-- BASE DE DATOS
+-- =====================================
+
+DROP DATABASE IF EXISTS bd_proyecto;
+
+CREATE DATABASE bd_proyecto
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+USE bd_proyecto;
+
+
+-- =====================================
+-- TABLAS DE UBICACIÓN
+-- =====================================
+
+CREATE TABLE continente (
+    id_continente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255)
+);
+
+CREATE TABLE pais (
+    id_pais INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255),
+    id_continente INT NOT NULL,
+    FOREIGN KEY (id_continente)
+        REFERENCES continente(id_continente)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE departamento (
+    id_departamento INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255),
+    id_pais INT NOT NULL,
+    FOREIGN KEY (id_pais)
+        REFERENCES pais(id_pais)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE ciudad (
+    id_ciudad INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    id_departamento INT NOT NULL,
+    FOREIGN KEY (id_departamento)
+        REFERENCES departamento(id_departamento)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE barrio (
+    id_barrio INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    id_ciudad INT NOT NULL,
+    FOREIGN KEY (id_ciudad)
+        REFERENCES ciudad(id_ciudad)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- =====================================
+-- TABLAS DE SEGURIDAD
+-- =====================================
+
+CREATE TABLE persona (
+    id_persona INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    documento VARCHAR(20) NOT NULL UNIQUE,
+    telefono VARCHAR(20),
+    email VARCHAR(150) UNIQUE,
+    id_barrio INT NOT NULL,
+    FOREIGN KEY (id_barrio)
+        REFERENCES barrio(id_barrio)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE rol (
+    id_rol INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(80) NOT NULL UNIQUE,
+    descripcion VARCHAR(255)
+);
+
+CREATE TABLE usuario (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(80) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    id_persona INT NOT NULL UNIQUE,
+    FOREIGN KEY (id_persona)
+        REFERENCES persona(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE usuario_rol (
+    id_usuario INT,
+    id_rol INT,
+    PRIMARY KEY (id_usuario, id_rol),
+    FOREIGN KEY (id_usuario)
+        REFERENCES usuario(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    FOREIGN KEY (id_rol)
+        REFERENCES rol(id_rol)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+
+-- =====================================
+-- PARTE COMERCIAL
+-- =====================================
+
+CREATE TABLE categoria (
+    id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion VARCHAR(255)
+);
+
+CREATE TABLE producto (
+    id_producto INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion VARCHAR(255),
+    precio DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    id_categoria INT NOT NULL,
+    FOREIGN KEY (id_categoria)
+        REFERENCES categoria(id_categoria)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE factura (
+    id_factura INT AUTO_INCREMENT PRIMARY KEY,
+    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    id_persona INT NOT NULL,
+    id_usuario INT NOT NULL,
+    FOREIGN KEY (id_persona)
+        REFERENCES persona(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    FOREIGN KEY (id_usuario)
+        REFERENCES usuario(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE detalle_factura (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    cantidad INT NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+    id_factura INT NOT NULL,
+    id_producto INT NOT NULL,
+    FOREIGN KEY (id_factura)
+        REFERENCES factura(id_factura)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    FOREIGN KEY (id_producto)
+        REFERENCES producto(id_producto)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- =====================================
+-- VERIFICACIÓN
+-- =====================================
+
+SHOW TABLES;
