@@ -1,16 +1,7 @@
--- =========================================================
--- BASE DE DATOS: carrito de compra
--- PostgreSQL - sin schemas
--- Basado en los 4 documentos analizados
--- =========================================================
-
 CREATE DATABASE shopping_cart_db;
 
--- Ejecuta esto después de conectarte a la base:
--- \c shopping_cart_db
-
 -- =========================================================
--- PARAMETER
+-- PARAMETRO
 -- =========================================================
 
 CREATE TABLE status (
@@ -122,7 +113,7 @@ CREATE TABLE shipment_status (
 );
 
 -- =========================================================
--- LOCATION
+-- UBICACIÓN
 -- =========================================================
 
 CREATE TABLE continent (
@@ -206,7 +197,7 @@ CREATE TABLE address (
 );
 
 -- =========================================================
--- SECURITY
+-- SEGURIDAD
 -- =========================================================
 
 CREATE TABLE person (
@@ -334,7 +325,7 @@ CREATE TABLE module_view (
 );
 
 -- =========================================================
--- CUSTOMER
+-- CLIENTE
 -- =========================================================
 
 CREATE TABLE customer (
@@ -367,7 +358,7 @@ CREATE TABLE customer_address (
 );
 
 -- =========================================================
--- SUPPLIER
+-- PROVEEDOR
 -- =========================================================
 
 CREATE TABLE supplier (
@@ -419,7 +410,7 @@ CREATE TABLE supplier_product (
 );
 
 -- =========================================================
--- INVENTORY
+-- INVENTARIO
 -- =========================================================
 
 CREATE TABLE category (
@@ -525,7 +516,7 @@ CREATE TABLE inventory_movement (
 );
 
 -- =========================================================
--- BILLING
+-- FACTURACIÓN
 -- =========================================================
 
 CREATE TABLE cart (
@@ -658,7 +649,7 @@ CREATE TABLE shipment (
 );
 
 -- =========================================================
--- FOREIGN KEYS
+-- LLAVES FORANEAS
 -- =========================================================
 
 ALTER TABLE type_document ADD CONSTRAINT fk_type_document_status FOREIGN KEY (status) REFERENCES status(id);
