@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MR - Sistema Veterinario</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --border: #1e2d45;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --pk: #fbbf24;
+    --fk: #60a5fa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 2.5rem 2rem 1.5rem;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    display: block;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #14b8a6, transparent);
+    margin-top: 1.5rem;
+  }
+  .header h1 {
+    font-size: clamp(1.6rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #e2e8f0 30%, #14b8a6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    padding: 1rem 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-underline { text-decoration: underline; text-decoration-color: var(--pk); text-decoration-thickness: 2px; color: var(--text); }
+  .legend-star { color: var(--fk); }
+
+  .canvas-wrap {
+    position: relative;
+    overflow: auto;
+    padding: 1rem 2rem 3rem;
+    cursor: grab;
+  }
+  .canvas-wrap.dragging { cursor: grabbing; }
+
+  svg#mr {
+    display: block;
+  }
+
+  .entity {
+    filter: drop-shadow(0 4px 24px rgba(0,0,0,0.5));
+  }
+
+  .mobile-note {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>MR — Modelo Relacional del Sistema Veterinario</h1>
+  <p>24 tablas · Derivado del MER (mer-veterinaria.html)</p>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-underline">clave</span> PK — Clave Primaria</div>
+  <div class="legend-item"><span class="legend-star">clave</span> FK — Clave Foránea</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div> Atributo normal</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f43f5e"></div> Núcleo</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Acceso / SaaS</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#14b8a6"></div> Catálogo</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Módulo clínico</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Catálogo clínico / N:M</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Ventas / finanzas</div>
+</div>
+
+<p class="mobile-note">⟵ Arrastra o desplaza para ver el diagrama completo ⟶</p>
+
+<div class="canvas-wrap" id="canvasWrap">
+<svg id="mr" xmlns="http://www.w3.org/2000/svg" width="1690" height="1436" viewBox="0 0 1690 1436">
+<defs>
+  <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#60a5fa"/>
+  </marker>
+</defs>
+</svg>
+</div>
+
+<script>
+const entities = [{"id": "rol", "x": 40, "y": 40, "color": "#3b82f6", "label": "ROL", "attrs": [["id_rol", "pk"], ["nombre_rol", "plain"]]}, {"id": "usuario", "x": 380, "y": 40, "color": "#3b82f6", "label": "USUARIO", "attrs": [["id_usuario", "pk"], ["nombre", "plain"], ["apellido", "plain"], ["email", "plain"], ["telefono", "plain"], ["contraseña", "plain"], ["estado", "plain"], ["id_rol", "fk"], ["id_veterinaria", "fk"]]}, {"id": "recordatorio", "x": 720, "y": 40, "color": "#3b82f6", "label": "RECORDATORIO", "attrs": [["id_recordatorio", "pk"], ["id_mascota", "fk"], ["tipo", "plain"], ["fecha", "plain"], ["mensaje", "plain"]]}, {"id": "veterinaria", "x": 1060, "y": 40, "color": "#f43f5e", "label": "VETERINARIA", "attrs": [["id_veterinaria", "pk"], ["nombre", "plain"], ["direccion", "plain"], ["telefono", "plain"], ["email", "plain"], ["plan_saas", "plain"], ["fecha_registro", "plain"]]}, {"id": "cliente", "x": 1400, "y": 40, "color": "#f43f5e", "label": "CLIENTE", "attrs": [["id_cliente", "pk"], ["nombre", "plain"], ["apellido", "plain"], ["telefono", "plain"], ["email", "plain"], ["direccion", "plain"], ["documento", "plain"], ["id_veterinaria", "fk"]]}, {"id": "mascota", "x": 40, "y": 378, "color": "#f43f5e", "label": "MASCOTA", "attrs": [["id_mascota", "pk"], ["nombre", "plain"], ["fecha_nacimiento", "plain"], ["sexo", "plain"], ["color", "plain"], ["peso", "plain"], ["id_cliente", "fk"], ["id_especie", "fk"], ["id_raza", "fk"]]}, {"id": "especie", "x": 380, "y": 378, "color": "#14b8a6", "label": "ESPECIE", "attrs": [["id_especie", "pk"], ["nombre", "plain"]]}, {"id": "raza", "x": 720, "y": 378, "color": "#14b8a6", "label": "RAZA", "attrs": [["id_raza", "pk"], ["nombre", "plain"], ["id_especie", "fk"]]}, {"id": "historia", "x": 1060, "y": 378, "color": "#10b981", "label": "HISTORIA_CLINICA", "attrs": [["id_historia", "pk"], ["id_mascota", "fk"], ["fecha_creacion", "plain"], ["observaciones_generales", "plain"]]}, {"id": "consulta", "x": 1400, "y": 378, "color": "#10b981", "label": "CONSULTA", "attrs": [["id_consulta", "pk"], ["id_historia", "fk"], ["id_veterinario", "fk"], ["fecha", "plain"], ["motivo", "plain"], ["sintomas", "plain"], ["observaciones", "plain"]]}, {"id": "diagnostico", "x": 40, "y": 716, "color": "#10b981", "label": "DIAGNOSTICO", "attrs": [["id_diagnostico", "pk"], ["id_consulta", "fk"], ["descripcion", "plain"], ["fecha", "plain"]]}, {"id": "tratamiento", "x": 380, "y": 716, "color": "#10b981", "label": "TRATAMIENTO", "attrs": [["id_tratamiento", "pk"], ["id_consulta", "fk"], ["indicaciones", "plain"], ["duracion", "plain"]]}, {"id": "cita", "x": 720, "y": 716, "color": "#10b981", "label": "CITA", "attrs": [["id_cita", "pk"], ["fecha", "plain"], ["hora", "plain"], ["estado", "plain"], ["id_mascota", "fk"], ["id_veterinario", "fk"]]}, {"id": "hospitalizacion", "x": 1060, "y": 716, "color": "#10b981", "label": "HOSPITALIZACION", "attrs": [["id_hospitalizacion", "pk"], ["id_mascota", "fk"], ["fecha_ingreso", "plain"], ["fecha_salida", "plain"], ["motivo", "plain"], ["estado", "plain"]]}, {"id": "cirugia", "x": 1400, "y": 716, "color": "#10b981", "label": "CIRUGIA", "attrs": [["id_cirugia", "pk"], ["id_mascota", "fk"], ["id_veterinario", "fk"], ["fecha", "plain"], ["descripcion", "plain"]]}, {"id": "medicamento", "x": 40, "y": 982, "color": "#8b5cf6", "label": "MEDICAMENTO", "attrs": [["id_medicamento", "pk"], ["nombre", "plain"], ["descripcion", "plain"], ["tipo", "plain"], ["dosis_recomendada", "plain"]]}, {"id": "trat_med", "x": 380, "y": 982, "color": "#8b5cf6", "label": "TRATAMIENTO_MEDICAMENTO", "attrs": [["id_tratamiento", "pk"], ["id_medicamento", "pk"], ["dosis", "plain"], ["frecuencia", "plain"]]}, {"id": "procedimiento", "x": 720, "y": 982, "color": "#8b5cf6", "label": "PROCEDIMIENTO", "attrs": [["id_procedimiento", "pk"], ["nombre", "plain"], ["descripcion", "plain"], ["costo", "plain"]]}, {"id": "producto", "x": 1060, "y": 982, "color": "#f59e0b", "label": "PRODUCTO", "attrs": [["id_producto", "pk"], ["nombre", "plain"], ["tipo", "plain"], ["precio", "plain"], ["stock", "plain"]]}, {"id": "inventario", "x": 1400, "y": 982, "color": "#f59e0b", "label": "INVENTARIO", "attrs": [["id_inventario", "pk"], ["id_producto", "fk"], ["cantidad", "plain"], ["fecha_actualizacion", "plain"]]}, {"id": "venta", "x": 40, "y": 1224, "color": "#f59e0b", "label": "VENTA", "attrs": [["id_venta", "pk"], ["fecha", "plain"], ["id_cliente", "fk"], ["id_usuario", "fk"], ["total", "plain"]]}, {"id": "detalle_venta", "x": 380, "y": 1224, "color": "#f59e0b", "label": "DETALLE_VENTA", "attrs": [["id_detalle", "pk"], ["id_venta", "fk"], ["id_producto", "fk"], ["cantidad", "plain"], ["precio_unitario", "plain"]]}, {"id": "factura", "x": 720, "y": 1224, "color": "#f59e0b", "label": "FACTURA", "attrs": [["id_factura", "pk"], ["id_venta", "fk"], ["numero_factura", "plain"], ["fecha", "plain"], ["total", "plain"]]}, {"id": "pago", "x": 1060, "y": 1224, "color": "#f59e0b", "label": "PAGO", "attrs": [["id_pago", "pk"], ["id_factura", "fk"], ["metodo_pago", "plain"], ["monto", "plain"], ["fecha", "plain"]]}];
+const relations = [["usuario", "id_rol", "rol", "id_rol"], ["usuario", "id_veterinaria", "veterinaria", "id_veterinaria"], ["recordatorio", "id_mascota", "mascota", "id_mascota"], ["cliente", "id_veterinaria", "veterinaria", "id_veterinaria"], ["mascota", "id_cliente", "cliente", "id_cliente"], ["mascota", "id_especie", "especie", "id_especie"], ["mascota", "id_raza", "raza", "id_raza"], ["raza", "id_especie", "especie", "id_especie"], ["historia", "id_mascota", "mascota", "id_mascota"], ["consulta", "id_historia", "historia", "id_historia"], ["consulta", "id_veterinario", "usuario", "id_usuario"], ["diagnostico", "id_consulta", "consulta", "id_consulta"], ["tratamiento", "id_consulta", "consulta", "id_consulta"], ["cita", "id_mascota", "mascota", "id_mascota"], ["cita", "id_veterinario", "usuario", "id_usuario"], ["hospitalizacion", "id_mascota", "mascota", "id_mascota"], ["cirugia", "id_mascota", "mascota", "id_mascota"], ["cirugia", "id_veterinario", "usuario", "id_usuario"], ["trat_med", "id_tratamiento", "tratamiento", "id_tratamiento"], ["trat_med", "id_medicamento", "medicamento", "id_medicamento"], ["inventario", "id_producto", "producto", "id_producto"], ["venta", "id_cliente", "cliente", "id_cliente"], ["venta", "id_usuario", "usuario", "id_usuario"], ["detalle_venta", "id_venta", "venta", "id_venta"], ["detalle_venta", "id_producto", "producto", "id_producto"], ["factura", "id_venta", "venta", "id_venta"], ["pago", "id_factura", "factura", "id_factura"]];
+
+const ROW_H = 24;
+const HEADER_H = 32;
+const TABLE_W = 230;
+
+function entityHeight(e) { return HEADER_H + e.attrs.length * ROW_H; }
+
+const entMap = {};
+entities.forEach(e => entMap[e.id] = e);
+
+function attrCenterY(e, name) {
+  const idx = e.attrs.findIndex(a => a[0] === name);
+  return e.y + HEADER_H + idx * ROW_H + ROW_H/2;
+}
+
+function drawEntity(e) {
+  const H = entityHeight(e);
+  let svg = '';
+  svg += `<rect x="${e.x}" y="${e.y}" width="${TABLE_W}" height="${H}" rx="10" fill="#111827" stroke="${e.color}" stroke-width="1.5"/>`;
+  svg += `<rect x="${e.x}" y="${e.y}" width="${TABLE_W}" height="${HEADER_H}" rx="10" fill="${e.color}"/>`;
+  svg += `<rect x="${e.x}" y="${e.y+HEADER_H-12}" width="${TABLE_W}" height="12" fill="${e.color}"/>`;
+  svg += `<line x1="${e.x}" y1="${e.y+HEADER_H}" x2="${e.x+TABLE_W}" y2="${e.y+HEADER_H}" stroke="${e.color}" stroke-width="1" opacity="0.6"/>`;
+  svg += `<text x="${e.x+TABLE_W/2}" y="${e.y+HEADER_H/2+4}" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="11.5" fill="#ffffff">${e.label}</text>`;
+
+  e.attrs.forEach((a, i) => {
+    const ay = e.y + HEADER_H + i*ROW_H;
+    const [name, type] = a;
+    let color = '#94a3b8';
+    let badge = '';
+    let weight = '400';
+    let deco = '';
+    if (type === 'pk') { color = '#fbbf24'; badge = 'PK'; weight = '700'; deco = 'underline'; }
+    if (type === 'fk') { color = '#60a5fa'; badge = 'FK'; }
+    if (i % 2 === 0) svg += `<rect x="${e.x+1}" y="${ay}" width="${TABLE_W-2}" height="${ROW_H}" fill="white" opacity="0.02"/>`;
+    svg += `<text x="${e.x+12}" y="${ay+ROW_H/2+4}" font-family="JetBrains Mono,monospace" font-size="10.5" font-weight="${weight}" text-decoration="${deco}" fill="${color}">${name}</text>`;
+    if (badge) {
+      svg += `<text x="${e.x+TABLE_W-10}" y="${ay+ROW_H/2+3}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="700" fill="${color}" opacity="0.85">${badge}</text>`;
+    }
+  });
+
+  svg += `<rect x="${e.x}" y="${e.y+H-5}" width="${TABLE_W}" height="5" fill="${e.color}" opacity="0.15"/>`;
+  return svg;
+}
+
+function drawRelation(rel) {
+  const [fromId, attr, toId, refCol] = rel;
+  const from = entMap[fromId];
+  const to = entMap[toId];
+  if (!from || !to) return '';
+
+  const sy = attrCenterY(from, attr);
+  const ty = attrCenterY(to, refCol);
+
+  let x1, x2;
+  const fromCenterX = from.x + TABLE_W/2;
+  const toCenterX = to.x + TABLE_W/2;
+
+  if (fromCenterX <= toCenterX) {
+    x1 = from.x + TABLE_W; x2 = to.x;
+  } else {
+    x1 = from.x; x2 = to.x + TABLE_W;
+  }
+
+  const mx = (x1 + x2) / 2;
+  const path = `M ${x1} ${sy} C ${mx} ${sy} ${mx} ${ty} ${x2} ${ty}`;
+
+  return `<path d="${path}" fill="none" stroke="#60a5fa" stroke-width="1.3" stroke-opacity="0.4" marker-end="url(#arrow)"/>`;
+}
+
+const svgEl = document.getElementById('mr');
+let relSvg = '';
+relations.forEach(r => { relSvg += drawRelation(r); });
+let entSvg = '';
+entities.forEach(e => { entSvg += `<g class="entity">${drawEntity(e)}</g>`; });
+svgEl.innerHTML = relSvg + entSvg;
+
+// Drag-to-scroll
+const wrap = document.getElementById('canvasWrap');
+let isDown = false, startX, startY, scrollLeft, scrollTop;
+wrap.addEventListener('mousedown', (e) => {
+  isDown = true;
+  wrap.classList.add('dragging');
+  startX = e.pageX - wrap.offsetLeft;
+  startY = e.pageY - wrap.offsetTop;
+  scrollLeft = wrap.scrollLeft;
+  scrollTop = wrap.scrollTop;
+});
+wrap.addEventListener('mouseleave', () => { isDown = false; wrap.classList.remove('dragging'); });
+wrap.addEventListener('mouseup', () => { isDown = false; wrap.classList.remove('dragging'); });
+wrap.addEventListener('mousemove', (e) => {
+  if (!isDown) return;
+  e.preventDefault();
+  const x = e.pageX - wrap.offsetLeft;
+  const y = e.pageY - wrap.offsetTop;
+  wrap.scrollLeft = scrollLeft - (x - startX);
+  wrap.scrollTop = scrollTop - (y - startY);
+});
+</script>
+
+</body>
+</html>
