@@ -1,329 +1,576 @@
-# Contrato de API — Costumes
+# Contrato HTTP — Costumes
 
-## 1. Propósito
+## 1. Convenciones generales
 
-Este documento define el contrato de la API de `Costumes`, utilizada para la comunicación entre la aplicación frontend y el backend.
+La API utiliza como ruta base:
 
-La API permite gestionar la autenticación, asesores, trajes, clientes, alquileres, devoluciones y consultas necesarias para la operación del sistema.
+`/api/v1`
 
-## 2. Convenciones generales
+La comunicación se realiza mediante JSON UTF-8 utilizando nombres de propiedades en `snake_case`.
 
-La API utiliza HTTP y trabaja con información en formato JSON.
+Los identificadores utilizan UUID v4 y las fechas se representan en formato ISO 8601 UTC terminadas en `Z`.
 
-Los identificadores utilizados en el código y en la estructura técnica de la API se escriben en inglés.
+Todos los endpoints requieren autenticación mediante:
+
+`Authorization: Bearer <token>`
+
+excepto:
+
+- `POST /auth/login`
+- `GET /health`
 
 Los mensajes destinados al usuario se presentan en español.
 
-Las fechas e instantes se manejan en UTC.
+## 2. Paginación
 
-## 3. Códigos HTTP
+Los endpoints que retornan colecciones utilizan:
 
-La API utiliza los códigos HTTP correspondientes al resultado de cada operación.
+`page=1&size=20`
 
-Entre los principales se encuentran:
+El tamaño máximo permitido es `50`.
 
-- `200 OK`: operación o consulta realizada correctamente.
-- `201 Created`: recurso u operación creada correctamente.
-- `400 Bad Request`: solicitud inválida.
-- `401 Unauthorized`: autenticación requerida o credenciales inválidas.
-- `404 Not Found`: recurso no encontrado.
-- `409 Conflict`: la operación entra en conflicto con el estado actual del sistema.
-- `422 Unprocessable Entity`: los datos enviados no cumplen las validaciones.
-
-## 4. Estructura de errores
-
-Las respuestas de error deben mantener una estructura uniforme:
+Formato general de respuesta:
 
 ```json
 {
-  "code": "ERROR_CODE",
-  "message": "Mensaje para el usuario en español.",
-  "details": {}
+  "items": [],
+  "page": 1,
+  "size": 20,
+  "total": 0
 }
 ```
 
-Donde:
+## 3. Formato de errores
 
-- `code`: identifica técnicamente el error.
-- `message`: explica el resultado al usuario en español.
-- `details`: contiene información adicional cuando sea necesaria.
-
-# 5. Autenticación
-
-## Iniciar sesión
-
-`POST /api/login`
-
-Permite autenticar a un asesor mediante sus credenciales.
-
-### Solicitud
+Los errores utilizan una estructura uniforme:
 
 ```json
 {
-  "email": "asesor@example.com",
+  "code": "COSTUME_NOT_AVAILABLE",
+  "message": "No hay unidades disponibles.",
+  "details": []
+}
+```
+
+Los códigos HTTP utilizados son:
+
+| Código | Uso |
+|---|---|
+| `200` | Consulta u operación completada correctamente. |
+| `201` | Recurso u operación creada correctamente. |
+| `401` | Autenticación ausente o inválida. |
+| `403` | El usuario autenticado no posee el rol requerido. |
+| `404` | El recurso solicitado no existe. |
+| `409` | Conflicto con el estado actual del sistema. |
+| `422` | Datos o reglas de validación inválidos. |
+
+`details` nunca debe exponer consultas SQL, rutas internas, contraseñas, hashes, claves, secretos ni trazas de ejecución.
+
+## 4. Autenticación
+
+### POST `/auth/login`
+
+**Acceso:** público.
+
+Solicitud:
+
+```json
+{
+  "username": "advisor01",
   "password": "password"
 }
 ```
 
-### Resultado
-
-Si las credenciales son válidas, la API permite continuar con las operaciones protegidas.
-
-Si son inválidas, la solicitud debe ser rechazada.
-
-# 6. Asesores
-
-## Registrar asesor
-
-`POST /api/advisors`
-
-Registra un nuevo asesor.
-
-### Datos principales
+Respuesta exitosa:
 
 ```json
 {
-  "name": "Nombre del asesor",
-  "email": "asesor@example.com",
-  "password": "password"
+  "access_token": "token",
+  "token_type": "Bearer",
+  "expires_in": 28800,
+  "role": "advisor"
 }
 ```
 
-La contraseña debe almacenarse mediante hash y nunca en texto plano.
+El token tiene una vigencia de ocho horas.
 
-# 7. Trajes
+Credenciales inválidas:
 
-## Listar trajes
+`401 INVALID_CREDENTIALS`
 
-`GET /api/costumes`
+## 5. Estado del servicio
 
-Devuelve los trajes disponibles para consulta en el catálogo.
+### GET `/health`
 
-## Consultar traje
+**Acceso:** público.
 
-`GET /api/costumes/{id}`
-
-Devuelve la información correspondiente a un traje.
-
-## Registrar traje
-
-`POST /api/costumes`
-
-Registra un nuevo traje en el catálogo.
-
-### Datos principales
+Respuesta:
 
 ```json
 {
-  "reference": "COS-001",
-  "name": "Traje de gala",
-  "category_id": 1,
+  "status": "ok"
+}
+```
+
+## 6. Usuarios
+
+### POST `/users`
+
+**Rol:** `admin`
+
+Permite crear únicamente usuarios con rol `advisor`.
+
+Solicitud:
+
+```json
+{
+  "username": "advisor01",
+  "password": "password",
+  "role": "advisor"
+}
+```
+
+No se permite crear usuarios con rol `admin` mediante la API.
+
+Posibles errores:
+
+- `409 USERNAME_TAKEN`
+- `422 VALIDATION_ERROR`
+- `403 FORBIDDEN_ROLE`
+
+Las respuestas nunca incluyen la contraseña ni su hash.
+
+## 7. Categorías
+
+### GET `/categories`
+
+**Acceso:** autenticado.
+
+Retorna las cinco categorías disponibles:
+
+- gala
+- folclor
+- teatro
+- infantiles
+- temporada
+
+## 8. Trajes
+
+### GET `/costumes`
+
+**Acceso:** autenticado.
+
+Parámetros disponibles:
+
+- `q`
+- `category_id`
+- `page`
+- `size`
+
+Permite buscar trajes activos por nombre o diseñador y filtrar por categoría.
+
+### GET `/costumes/{id}`
+
+**Acceso:** autenticado.
+
+Retorna el detalle de un traje activo.
+
+Si no existe o se encuentra dado de baja:
+
+`404 NOT_FOUND`
+
+### POST `/costumes`
+
+**Rol:** `admin`
+
+Solicitud:
+
+```json
+{
+  "name": "Traje de gala clásico",
+  "designer": "Diseñador",
+  "reference": "GAL-001",
+  "category_id": "uuid",
   "total_units": 5
 }
 ```
 
-## Actualizar traje
+Al crear el traje:
 
-`PUT /api/costumes/{id}`
+`available_units = total_units`
 
-Actualiza la información permitida de un traje existente.
+Una referencia activa duplicada produce:
 
-## Dar de baja un traje
+`409 REFERENCE_TAKEN`
 
-`DELETE /api/costumes/{id}`
+### PUT `/costumes/{id}`
+
+**Rol:** `admin`
+
+Permite reemplazar:
+
+```json
+{
+  "name": "Traje de gala clásico",
+  "designer": "Diseñador",
+  "category_id": "uuid",
+  "total_units": 6
+}
+```
+
+Al modificar `total_units`, las unidades disponibles se ajustan según la diferencia sin permitir valores por debajo de cero ni por encima del total.
+
+### DELETE `/costumes/{id}`
+
+**Rol:** `admin`
 
 Realiza la baja lógica del traje.
 
-La eliminación no debe borrar físicamente el registro del catálogo.
+No elimina físicamente el registro.
 
-## Buscar trajes
+Si existen alquileres abiertos asociados que impiden la operación:
 
-`GET /api/costumes/search`
+`409 COSTUME_HAS_OPEN_RENTALS`
 
-Permite buscar trajes registrados en el catálogo.
+## 9. Portada del traje
 
-La búsqueda debe respetar el estado de los elementos y la disponibilidad correspondiente.
+### PUT `/costumes/{id}/cover`
 
-# 8. Categorías
+**Rol:** `admin`
 
-## Listar categorías
+Recibe `multipart/form-data` con:
 
-`GET /api/categories`
+`file`
 
-Devuelve las categorías disponibles para clasificar los trajes.
+Formatos permitidos:
 
-Las categorías iniciales son:
+- JPG
+- PNG
 
-1. Gala.
-2. Folclor.
-3. Teatro.
-4. Infantiles.
-5. Temporada.
+Tamaño máximo:
 
-# 9. Clientes
+`2 MB`
 
-## Listar clientes
+### GET `/costumes/{id}/cover`
 
-`GET /api/clients`
+**Acceso:** autenticado.
 
-Devuelve los clientes registrados.
+Retorna la imagen almacenada.
 
-## Consultar cliente
+Si no existe:
 
-`GET /api/clients/{id}`
+`404 NOT_FOUND`
 
-Devuelve la información de un cliente específico.
+### DELETE `/costumes/{id}/cover`
 
-## Registrar cliente
+**Rol:** `admin`
 
-`POST /api/clients`
+Elimina la portada asociada al traje.
 
-Registra un nuevo cliente.
+## 10. Objeto traje
 
-## Actualizar cliente
-
-`PUT /api/clients/{id}`
-
-Actualiza la información permitida de un cliente.
-
-# 10. Alquileres
-
-## Listar alquileres
-
-`GET /api/rentals`
-
-Devuelve las operaciones de alquiler registradas.
-
-## Consultar alquiler
-
-`GET /api/rentals/{id}`
-
-Devuelve la información de un alquiler específico.
-
-## Registrar alquiler
-
-`POST /api/rentals`
-
-Registra una nueva operación de alquiler.
-
-### Ejemplo de solicitud
+Representación general:
 
 ```json
 {
-  "client_id": 1,
-  "items": [
-    {
-      "costume_id": 1,
-      "quantity": 1
-    }
-  ]
+  "id": "uuid",
+  "name": "Traje de gala clásico",
+  "designer": "Diseñador",
+  "reference": "GAL-001",
+  "category": {
+    "id": "uuid",
+    "name": "gala"
+  },
+  "total_units": 5,
+  "available_units": 4,
+  "cover_key": null
 }
 ```
 
-### Validaciones
-
-Antes de confirmar el alquiler, la API debe comprobar:
-
-- Que el cliente exista.
-- Que el cliente no supere cinco trajes sin devolver.
-- Que el cliente no tenga alquileres vencidos.
-- Que las unidades solicitadas estén disponibles.
-- Que la disponibilidad permanezca entre cero y el total de unidades.
-
-El plazo del alquiler es de cuatro días.
-
-La información correspondiente al traje debe quedar congelada en la línea de la operación.
-
-# 11. Concurrencia en alquileres
-
-Si dos operadores intentan alquilar simultáneamente la última unidad disponible, solamente una operación puede completarse.
-
-La operación exitosa debe responder:
-
-`201 Created`
-
-La operación que no pueda obtener la última unidad debe responder:
-
-`409 Conflict`
-
-La disponibilidad nunca puede quedar por debajo de cero.
-
-# 12. Devoluciones
-
-## Registrar devolución
-
-`POST /api/returns`
-
-Registra la devolución de uno o varios elementos correspondientes a un alquiler.
-
-### Ejemplo de solicitud
-
-```json
-{
-  "rental_id": 1,
-  "items": [
-    {
-      "costume_id": 1,
-      "quantity": 1
-    }
-  ]
-}
-```
-
-### Resultado
-
-Una devolución válida debe:
-
-- Registrar la operación.
-- Actualizar el estado correspondiente.
-- Recuperar las unidades disponibles.
-- Mantener el registro histórico de la devolución.
-
-Las devoluciones no deben eliminarse.
-
-# 13. Alquileres vencidos
-
-## Consultar vencidos
-
-`GET /api/rentals/overdue`
-
-Devuelve los alquileres que han superado su fecha límite y continúan pendientes de devolución.
-
-Un cliente con alquileres vencidos no puede recibir nuevos trajes hasta realizar las devoluciones correspondientes.
-
-# 14. Reporte de trajes más solicitados
-
-## Consultar reporte
-
-`GET /api/reports/most-requested-costumes`
-
-Devuelve los trajes con mayor número de solicitudes de acuerdo con las operaciones de alquiler registradas.
-
-La información histórica de los alquileres debe utilizarse para generar el reporte.
-
-# 15. Disponibilidad
-
-La API debe mantener en todo momento la siguiente condición:
+Debe cumplirse siempre:
 
 `0 <= available_units <= total_units`
 
-Un alquiler disminuye las unidades disponibles y una devolución válida las incrementa.
+## 11. Clientes
 
-La API debe impedir cualquier operación que genere una disponibilidad inválida.
+### GET `/customers`
 
-# 16. Conservación de información
+**Roles:** `admin`, `advisor`
 
-Los alquileres y devoluciones forman parte del historial del sistema y no deben eliminarse.
+Parámetros:
 
-Los cambios posteriores realizados sobre un traje del catálogo tampoco deben modificar la información congelada dentro de las líneas de alquiler.
+- `q`
+- `page`
+- `size`
 
-# 17. Manejo de fechas
+Permite buscar por nombre o número de documento.
 
-Todas las fechas e instantes intercambiados y almacenados por el sistema deben manejarse en UTC.
+### GET `/customers/{id}`
 
-Esto incluye principalmente:
+**Roles:** `admin`, `advisor`
 
-- Fecha del alquiler.
-- Fecha límite de devolución.
-- Fecha de devolución.
-- Determinación de vencimientos.
+Retorna el detalle del cliente y sus líneas de alquiler activas mediante:
+
+`active_rentals`
+
+### POST `/customers`
+
+**Roles:** `admin`, `advisor`
+
+Solicitud:
+
+```json
+{
+  "full_name": "Nombre del cliente",
+  "document_number": "123456789"
+}
+```
+
+Documento duplicado:
+
+`409 DOCUMENT_TAKEN`
+
+Los clientes no se eliminan.
+
+## 12. Registrar alquiler
+
+### POST `/rentals`
+
+**Roles:** `admin`, `advisor`
+
+Solicitud:
+
+```json
+{
+  "customer_id": "uuid",
+  "items": [
+    {
+      "costume_id": "uuid"
+    }
+  ]
+}
+```
+
+Cada alquiler contiene entre **1 y 3 líneas**.
+
+No se puede repetir el mismo traje dentro del mismo alquiler.
+
+Antes de registrar la operación, el backend debe verificar:
+
+- Que el cliente no tenga alquileres vencidos pendientes.
+- Que el cliente no supere un máximo de 5 trajes sin devolver entre todos sus alquileres.
+- Que cada traje tenga unidades disponibles.
+- Que un mismo traje no aparezca repetido dentro del alquiler.
+
+El registro del alquiler y la modificación de disponibilidad se realizan dentro de una transacción.
+
+Si una línea no puede registrarse, no debe persistirse parcialmente el alquiler.
+
+Posibles errores:
+
+- `409 COSTUME_NOT_AVAILABLE`
+- `409 CUSTOMER_HAS_OVERDUE`
+- `422 CUSTOMER_LIMIT_EXCEEDED`
+- `422 DUPLICATE_COSTUME_IN_RENTAL`
+- `422 VALIDATION_ERROR`
+
+Cuando dos operadores intenten alquilar simultáneamente la última unidad disponible, una operación debe completarse con `201` y la otra debe recibir `409`.
+
+## 13. Consultar alquileres
+
+### GET `/rentals`
+
+**Roles:** `admin`, `advisor`
+
+Filtros:
+
+- `from`
+- `to`
+- `status`
+- `customer_id`
+- `page`
+- `size`
+
+Los estados disponibles son:
+
+- `open`
+- `overdue`
+- `closed`
+
+El estado se calcula y no se almacena como valor persistente.
+
+### GET `/rentals/{id}`
+
+**Roles:** `admin`, `advisor`
+
+Retorna el alquiler, sus líneas y su estado calculado.
+
+## 14. Objeto alquiler
+
+Representación general:
+
+```json
+{
+  "id": "uuid",
+  "customer_id": "uuid",
+  "rented_at": "2026-11-11T15:00:00Z",
+  "status": "open",
+  "items": [
+    {
+      "id": "uuid",
+      "costume_id": "uuid",
+      "costume_name": "Traje de gala clásico",
+      "reference": "GAL-001",
+      "category_name": "gala",
+      "due_at": "2026-11-15T15:00:00Z",
+      "returned_at": null
+    }
+  ]
+}
+```
+
+Cada línea conserva congelados:
+
+- `costume_name`
+- `reference`
+- `category_name`
+
+Estos valores no cambian si posteriormente se modifica el catálogo.
+
+La fecha límite se calcula como:
+
+`due_at = rented_at + 4 días`
+
+## 15. Registrar devolución
+
+### POST `/rentals/{rental_id}/items/{item_id}/return`
+
+**Roles:** `admin`, `advisor`
+
+Registra la devolución de una única línea.
+
+La operación:
+
+1. Verifica que la línea no haya sido devuelta.
+2. Registra `returned_at` en UTC.
+3. Incrementa una unidad disponible del traje.
+4. Mantiene `available_units <= total_units`.
+
+Intentar devolver nuevamente una línea ya devuelta produce:
+
+`409 ITEM_ALREADY_RETURNED`
+
+Los alquileres y devoluciones no se eliminan.
+
+## 16. Consultar vencidos
+
+### GET `/rentals/overdue`
+
+**Roles:** `admin`, `advisor`
+
+Retorna las líneas que cumplen:
+
+`returned_at = null`
+
+y:
+
+`due_at < current_time`
+
+La respuesta incluye `days_late`.
+
+Los resultados se ordenan comenzando por los de mayor retraso.
+
+## 17. Reporte de trajes más solicitados
+
+### GET `/reports/most-rented`
+
+**Rol:** `admin`
+
+Parámetros:
+
+- `from`
+- `to`
+
+El intervalo de fechas es inclusivo.
+
+Respuesta:
+
+```json
+{
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "rows": [
+    {
+      "costume_id": "uuid",
+      "costume_name": "Traje de gala clásico",
+      "category_name": "gala",
+      "times_rented": 10
+    }
+  ]
+}
+```
+
+El reporte utiliza la información congelada de las líneas de alquiler.
+
+No expone información del cliente ni del asesor.
+
+Si `to` es anterior a `from`:
+
+`422 INVALID_DATE_RANGE`
+
+Cuando no existen alquileres en el intervalo:
+
+```json
+{
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "rows": []
+}
+```
+
+## 18. Códigos de error
+
+Los códigos definidos para la API son:
+
+| Código | Significado |
+|---|---|
+| `INVALID_CREDENTIALS` | Credenciales de autenticación inválidas. |
+| `FORBIDDEN_ROLE` | El rol no permite realizar la operación. |
+| `NOT_FOUND` | El recurso solicitado no existe. |
+| `USERNAME_TAKEN` | El nombre de usuario ya está registrado. |
+| `REFERENCE_TAKEN` | La referencia del traje ya está utilizada. |
+| `DOCUMENT_TAKEN` | El documento del cliente ya está registrado. |
+| `COSTUME_HAS_OPEN_RENTALS` | El traje posee alquileres abiertos que impiden la operación. |
+| `COSTUME_NOT_AVAILABLE` | No existen unidades disponibles. |
+| `CUSTOMER_HAS_OVERDUE` | El cliente posee alquileres vencidos pendientes. |
+| `ITEM_ALREADY_RETURNED` | La línea ya fue devuelta. |
+| `CUSTOMER_LIMIT_EXCEEDED` | El cliente superaría el máximo de cinco trajes sin devolver. |
+| `DUPLICATE_COSTUME_IN_RENTAL` | Un mismo traje aparece repetido dentro del alquiler. |
+| `VALIDATION_ERROR` | Los datos recibidos no cumplen las validaciones. |
+| `INVALID_DATE_RANGE` | El intervalo de fechas no es válido. |
+
+## 19. Resumen de endpoints
+
+| Método | Endpoint | Acceso | Operación |
+|---|---|---|---|
+| POST | `/auth/login` | Público | Autenticación |
+| GET | `/health` | Público | Estado del servicio |
+| POST | `/users` | `admin` | Crear asesor |
+| GET | `/categories` | Autenticado | Listar categorías |
+| GET | `/costumes` | Autenticado | Buscar trajes |
+| GET | `/costumes/{id}` | Autenticado | Consultar traje |
+| POST | `/costumes` | `admin` | Crear traje |
+| PUT | `/costumes/{id}` | `admin` | Actualizar traje |
+| DELETE | `/costumes/{id}` | `admin` | Baja lógica |
+| PUT | `/costumes/{id}/cover` | `admin` | Registrar portada |
+| GET | `/costumes/{id}/cover` | Autenticado | Consultar portada |
+| DELETE | `/costumes/{id}/cover` | `admin` | Eliminar portada |
+| GET | `/customers` | `admin`, `advisor` | Buscar clientes |
+| GET | `/customers/{id}` | `admin`, `advisor` | Consultar cliente |
+| POST | `/customers` | `admin`, `advisor` | Crear cliente |
+| POST | `/rentals` | `admin`, `advisor` | Registrar alquiler |
+| GET | `/rentals` | `admin`, `advisor` | Listar alquileres |
+| GET | `/rentals/overdue` | `admin`, `advisor` | Consultar vencidos |
+| GET | `/rentals/{id}` | `admin`, `advisor` | Consultar alquiler |
+| POST | `/rentals/{rental_id}/items/{item_id}/return` | `admin`, `advisor` | Registrar devolución |
+| GET | `/reports/most-rented` | `admin` | Reporte de trajes más solicitados |
