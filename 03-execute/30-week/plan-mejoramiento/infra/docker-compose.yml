@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: UTC
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - database_data:/var/lib/postgresql/data
+  api:
+    build: {context: ../api}
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      APP_NAME: Costumes
+      APP_ENV: local
+      APP_DEBUG: 'false'
+      APP_URL: http://localhost:8000
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: '5432'
+      DB_DATABASE: ${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      TZ: UTC
+    ports: ['8000:8000']
+    volumes:
+      - covers_data:/var/www/html/storage/app/private/covers
+  app:
+    build: {context: ../app}
+    depends_on: [api]
+    ports: ['5173:5173']
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+  page:
+    image: nginx:alpine
+    volumes: ['../page:/usr/share/nginx/html:ro']
+    ports: ['8081:80']
+volumes:
+  database_data:
+  covers_data:
